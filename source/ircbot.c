@@ -2,7 +2,7 @@
 
 
 I know this is old school.  
-I use to mess with IRC stuff alot hahahahah  
+I use to mess with IRC Bots and stuff alot hahahahah  
 let see if I could get everyones switches in a IRC channel lol       
 Just kidding!   
 
@@ -229,75 +229,7 @@ int main(int argc, char **argv)
 
 
 	
-	/*
-	free(ip);
-    free(port);
-    free(nick);
-    free(channels);
-*/
-	
-	
-/*	
 
-    FILE *logfile = fopen("bot.log.txt", "a+");
-
-    while (1) {
-        char line[512];
-        read_line(socket_desc, line);
-        
-        char *prefix = get_prefix(line);
-        char *username = get_username(line);
-        char *command = get_command(line);
-        char *argument = get_last_argument(line);
-
-        if (strcmp(command, "PING") == 0){
-            send_pong(socket_desc, argument);
-            log_with_date("Got ping. Replying with pong...");
-        }else if (strcmp(command, "PRIVMSG") == 0){
-            char logline[512];
-            char *channel = get_argument(line, 1);
-
-            sprintf(logline, "%s/%s: %s", channel, username, argument);
-            log_with_date(logline);
-
-            char filename[500];
-            sprintf(filename, "%s.log.txt", channel);
-            freopen(filename, "a+", logfile);
-            log_to_file(logline, logfile);
-            free(channel);
-        }else if (strcmp(command, "JOIN") == 0){
-            char logline[512];
-            char *channel = get_argument(line, 1);
-            sprintf(logline, "%s joined %s.", username, channel);
-            log_with_date(logline);
-            
-            char filename[500];
-            sprintf(filename, "%s.log.txt", channel);
-            freopen(filename, "a+", logfile);
-            log_to_file(logline, logfile);
-            free(channel);
-        }else if (strcmp(command, "PART") == 0){
-            char logline[512];
-            char *channel = get_argument(line, 1);
-            sprintf(logline, "%s left %s.", username, channel);
-            log_with_date(logline);
-            
-            char filename[500];
-            sprintf(filename, "%s.log.txt", channel);
-            freopen(filename, "a+", logfile);
-            log_to_file(logline, logfile);
-            free(channel);
-        }
-
-        free(prefix);
-        free(username);
-        free(command);
-        free(argument);
-    }	
-	
-*/	
-	
-		// Main loop
 	while(appletMainLoop())
 	{
 
