@@ -140,6 +140,47 @@ char *get_argument(char line[], int argno){
     return argument;
 }
 
+void send_version(int sock, char to[]) {
+    char version_packet[512];
+	//irc->notice(hostd->nick,"\1VERSION %s\1",versionlist[curversion]); // my old irc bot hahaha
+    sprintf(version_packet, "NOTICE %s :\1VERSION IRC Bot v%f for Nintendo Switch by ELY M.\1\r\n", to, APP_VERSION);
+    send(sock, version_packet, strlen(version_packet), 0);
+}
+
+void send_time(int sock, char to[]) {
+	const char* const months[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+	const char* const weekDays[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    char time_packet[512];
+	
+	//Clock
+	const char* ampm = "AM";
+	time_t unixTime = time(NULL);
+	//struct tm* timeStruct = gmtime((const time_t *)&unixTime);
+	struct tm* timeStruct = localtime((const time_t *)&unixTime);
+	int hours = timeStruct->tm_hour;
+	int minutes = timeStruct->tm_min;
+	int seconds = timeStruct->tm_sec;
+	int day = timeStruct->tm_mday;
+	int month = timeStruct->tm_mon;
+	int year = timeStruct->tm_year +1900;
+	int wday = timeStruct->tm_wday;
+		
+	if (hours <= 12 && hours >= 0) {
+	//AM	
+	ampm = "AM";
+	}
+    else if (hours >= 13 && hours <= 24)
+    {
+	hours = (hours - 12);
+	//PM
+	ampm = "PM";
+    }	
+	
+	
+    sprintf(time_packet, "NOTICE %s :\1TIME %s %s %i %i %02i:%02i:%02i %s\1\r\n", to, weekDays[wday], months[month], day, year, hours, minutes, seconds, ampm);
+    send(sock, time_packet, strlen(time_packet), 0);
+}
+
 void set_nick(int sock, char nick[]){
     char nick_packet[512];
     sprintf(nick_packet, "NICK %s\r\n", nick);
@@ -159,6 +200,13 @@ void join_channel(int sock, char channel[], char key[]) {
     send(sock, join_packet, strlen(join_packet), 0);
 }
 
+void part_channel(int sock, char channel[]) {
+	printf("attempting to part %s\n", channel);
+    char part_packet[512];
+    sprintf(part_packet, "PART %s\r\n", channel);
+    send(sock, part_packet, strlen(part_packet), 0);
+}
+
 void send_pong(int sock, char argument[]) {
     char pong_packet[512];
     sprintf(pong_packet, "PONG :%s\r\n", argument);
@@ -173,10 +221,28 @@ void send_message(int sock, char to[], char message[]) {
 
 void send_quit(int sock, char message[]) {
     char quit_packet[512];
-    sprintf(quit_packet, "QUIT %s :%s\r\n", message);
+    sprintf(quit_packet, "QUIT :%s\r\n", message);
     send(sock, quit_packet, strlen(quit_packet), 0);
 }
 
+
+char *removestr(char *str, const char *word)
+{
+    char *ptr = str;
+    size_t len = strlen(word);
+    while((ptr = strstr(ptr, word)))
+    {
+        if(isalnum(*(ptr + len)) || (str != ptr && isalnum(*(ptr -1))))
+        {
+            ptr += len;
+        }
+        else
+        {
+            memmove(ptr, ptr + len, strlen(ptr + len) + 1);
+        }
+    }
+    return str;
+}
 
 
 int main(int argc, char **argv)
@@ -200,6 +266,7 @@ int main(int argc, char **argv)
 	
 	
     char *ip = "35.193.150.184";
+	//char *ip = "163.172.134.144";
     int port = 6667;
 
     struct sockaddr_in server;
@@ -239,7 +306,6 @@ int main(int argc, char **argv)
 		if (kDown & KEY_PLUS) { break; } // break in order to return to hbmenu
 				
 		
-		join_channel(socket_desc, channel, key);
 		
 		char line[512];
         read_line(socket_desc, line);
@@ -249,11 +315,20 @@ int main(int argc, char **argv)
         char *argument = get_last_argument(line);
 		
 
+		printf("CMD: %s\n", command);
+		
+		
+		
+		if (strcmp(command, "376") == 0) {
+		join_channel(socket_desc, channel, key);
+        }
+	
 		
 		if (strcmp(command, "PING") == 0) {
         send_pong(socket_desc, argument);
         printf("Got ping. Replying with pong...\n");
         }
+		
 		else if (strcmp(command, "PRIVMSG") == 0) {
             char logline[512];
             char *channel = get_argument(line, 1);
@@ -262,25 +337,96 @@ int main(int argc, char **argv)
 			printf("\n");
 			
 
+			printf("ARG: %s\n", argument);
+			
+			if (strcmp(argument, "\1VERSION\1") == 0) {
+			send_version(socket_desc, username);
+			printf("Got Version. Replying to %s with version\n", username);
+			}
+
+			if (strcmp(argument, "\1TIME\1") == 0) {
+			send_time(socket_desc, username);
+			printf("Got Time. Replying to %s with time\n", username);
+			}			
+		
+			
+			if (strcmp(argument, "!version") == 0) {
+            char *channel = get_argument(line, 1);
+			char versionline[512];
+			sprintf(versionline, "Hello, I am IRC Bot v%f for Nintendo Switch by ELY M.", APP_VERSION);
+			send_message(socket_desc, channel, versionline);
+            free(channel);
+			}
+			
+			
 			if (strcmp(argument, "!hello") == 0) {
-			printf("Got !hello\n");
             char *channel = get_argument(line, 1);
 			send_message(socket_desc, channel, "Hello, I am Elys Switch :D");
             free(channel);
 			}	
-
-
-			if (strcmp(argument, "!goodbye") == 0) {
-			printf("Got !goodbye\n");
+			
+			//useless unless I can get 2nd part//
+			//if (strcmp(argument, "!join") == 0) {
+			if (strncmp (argument,"!joinxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",5) == 0) {	
+			char joinline[512];
             char *channel = get_argument(line, 1);
-			send_quit(socket_desc, "Goodbye! I am Elys modded nintendo switch");
+			char *line2 =  get_argument(line, 2);
+			char *line3 =  get_argument(line, 3);
+			sprintf(joinline, "joined %s %s", line2, line3);
+			send_message(socket_desc, channel, joinline);
+			printf(joinline);
+			printf("\n");
+			join_channel(socket_desc, line2, line3);
             free(channel);
+			}
+			
+			if (strncmp (argument,"!partxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",5) == 0) {	
+			char partline[512];
+            char *channel = get_argument(line, 1);
+			char *line2 =  get_argument(line, 2);
+			sprintf(partline, "parted %s", line2);
+			printf(partline);
+			printf("\n");
+			send_message(socket_desc, channel, partline);
+			part_channel(socket_desc, line2);
+            free(channel);
+			}
+			
+			if (strncmp (argument,"!privmsgxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",8) == 0) {	
+			char privmsgline[512];
+			char *to =  get_argument(line, 2);			
+			char *message = removestr(argument, "!privmsg");
+			char *smessage = removestr(message, "  ");
+			char *fmessage = removestr(smessage, to);
+			sprintf(privmsgline, "pmed to: %s msg: %s", to, fmessage);
+			printf(privmsgline);
+			printf("\n");
+			send_message(socket_desc, to, fmessage);
+
+			}
+
+
+			//if (strcmp(argument, "!goodbye") == 0) {
+			if (strncmp (argument,"!goodbyexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",8) == 0) {
+            char *channel = get_argument(line, 1);
+			char *password = get_argument(line, 2);
+			if (strcmp(password, "password") == 0) {
+			send_quit(socket_desc, "Goodbye! I am Elys Modded Nintendo Switch");
+			sleep(5);
 			break;
+			} else {
+			send_message(socket_desc, channel, "Nice try! you are logged :)");
+			}
+            free(channel);
 			}
 			
 			
             free(channel);
-        }
+        } //PRIVMSG
+		
+		
+		
+		//print other people joins, privmsgs, and quits 
 		else if (strcmp(command, "JOIN") == 0){
             char logline[512];
             char *channel = get_argument(line, 1);
