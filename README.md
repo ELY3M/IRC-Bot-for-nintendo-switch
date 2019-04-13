@@ -9,7 +9,8 @@ Just kidding!
 This is so basic :)      
 
 the commands are  
-!version  
+!version
+!cfw - show you what cfw the switch is running. 
 !hello  
 !join #channel key  
 !part #channel   
