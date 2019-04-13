@@ -22,6 +22,55 @@ ELY M.
 #include <time.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
+
+
+//thanks to edizon
+bool isServiceRunning(const char *serviceName) {
+  Handle handle;
+  bool running = R_FAILED(smRegisterService(&handle, serviceName, false, 1));
+
+  svcCloseHandle(handle);
+
+  if (!running)
+    smUnregisterService(serviceName);
+
+  return running;
+}
+
+//thanks to XorTroll / Goldleaf :) 
+bool IsAtmosphere()
+{
+        u64 tmpc = 0;
+        return R_SUCCEEDED(splGetConfig((SplConfigItem)65000, &tmpc));
+}
+
+bool IsReiNX()
+{
+        Handle tmph = 0;
+        Result rc = smRegisterService(&tmph, "rnx", false, 1);
+        if(R_FAILED(rc)) return true;
+        smUnregisterService("rnx");
+        return false;
+}
+
+	
+bool IsSXOS()
+{
+        Handle tmph = 0;
+        Result rc = smRegisterService(&tmph, "tx", false, 1);
+        if(R_FAILED(rc)) return true;
+        smUnregisterService("tx");
+        return false;
+}
+
+
+bool is_dir(const char* path) {
+    struct stat buf;
+    stat(path, &buf);
+    return S_ISDIR(buf.st_mode);
+}
+
 
 int read_line(int sock, char *buffer) {
     size_t length = 0;
@@ -365,6 +414,35 @@ int main(int argc, char **argv)
             free(channel);
 			}	
 			
+			//if (isServiceRunning("tx") && !isServiceRunning("rnx")
+			if (strcmp(argument, "!cfw") == 0) {
+            char *channel = get_argument(line, 1);
+			char *cfwline = "I cant tell what cfw I am running.";
+			bool ams = IsAtmosphere();
+			bool reinx = IsReiNX();
+			bool sxos = IsSXOS();
+			
+			
+			if (isServiceRunning("tx")) {
+			cfwline = "My cfw is SXOS";	
+			} 
+			else if (isServiceRunning("rnx")) {
+			cfwline = "My cfw is REiNX";	
+			}
+			//else if (isServiceRunning("atmosphere")) {
+			//cfwline = "My cfw is Atmosphere";
+			//}
+			else if (IsAtmosphere()) {
+			cfwline = "My cfw is Atmosphere";
+			}
+			else if (is_dir("sdmc:/atmosphere")) {
+			cfwline = "My cfw is Atmosphere (found dir)";	
+			}
+			send_message(socket_desc, channel, cfwline);
+            free(channel);
+			}					
+			
+			
 			//useless unless I can get 2nd part//
 			//if (strcmp(argument, "!join") == 0) {
 			if (strncmp (argument,"!joinxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",5) == 0) {	
@@ -410,7 +488,7 @@ int main(int argc, char **argv)
 			if (strncmp (argument,"!goodbyexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",8) == 0) {
             char *channel = get_argument(line, 1);
 			char *password = get_argument(line, 2);
-			if (strcmp(password, "password") == 0) {
+			if (strcmp(password, "penis103") == 0) {
 			send_quit(socket_desc, "Goodbye! I am Elys Modded Nintendo Switch");
 			sleep(5);
 			break;
