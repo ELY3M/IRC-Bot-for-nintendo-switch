@@ -398,8 +398,10 @@ int main(int argc, char **argv)
 			else if (isServiceRunning("rnx")) {
 			cfwline = "My cfw is REiNX";	
 			}
-			else if (is_dir("sdmc:/atmosphere")) {
-			cfwline = "My cfw is Atmosphere (found dir)";	
+			//atmosphere's cheat engine runs no matter what is in the setting ini. 
+			//thanks to WerWolv
+			else if (isServiceRunning("dmnt:cht")) {
+			cfwline = "My cfw is Atmosphere";	
 			}
 			send_message(socket_desc, channel, cfwline);
             free(channel);
