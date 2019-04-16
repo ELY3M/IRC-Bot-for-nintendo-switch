@@ -20,4 +20,10 @@ The IRC bot now can reply to CTCP VERSION and TIME.
    
 
 you need to change irc server, channel, and key     
-if you want it to join your own irc channel.     
+if you want it to join your own irc channel.    
+
+
+## Credit
+WerWolv - https://github.com/WerWolv/EdiZon - for the codes to check what cfw the Switch have for !cfw command.  
+
+ 
