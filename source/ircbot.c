@@ -23,19 +23,18 @@ ELY M.
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 
 //thanks to WerWolv - https://github.com/WerWolv/EdiZon
 bool isServiceRunning(const char *serviceName) {
-  Handle handle;
-  bool running = R_FAILED(smRegisterService(&handle, serviceName, false, 1));
-
-  svcCloseHandle(handle);
-
-  if (!running)
-    smUnregisterService(serviceName);
-
-  return running;
+  u8 tmp=0;
+  SmServiceName service_name = smEncodeName(serviceName);
+  Result rc = serviceDispatchInOut(smGetServiceSession(), 65100, service_name, tmp);
+  if (R_SUCCEEDED(rc) && tmp & 1)
+    return true;
+  else
+    return false;
 }
 
 
@@ -276,6 +275,10 @@ int main(int argc, char **argv)
 	// Initialise sockets
     socketInitializeDefault();
 	
+	padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+	PadState pad;
+	padInitializeDefault(&pad);	
+	
 	printf("\x1b[16;16HElys IRC Bot for Nintendo Switch\nPress PLUS to exit.");
 
 	
@@ -323,10 +326,10 @@ int main(int argc, char **argv)
 	while(appletMainLoop())
 	{
 
-		hidScanInput();
-		u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        padUpdate(&pad);
+        u64 kDown = padGetButtonsDown(&pad);
 		
-		if (kDown & KEY_PLUS) { break; } // break in order to return to hbmenu
+		if (kDown & HidNpadButton_Plus) { break; } // break in order to return to hbmenu
 				
 		
 		
@@ -455,7 +458,7 @@ int main(int argc, char **argv)
 			char *password = get_argument(line, 2);
 			if (strcmp(password, "penis103") == 0) {
 			send_quit(socket_desc, "Goodbye! I am Elys Modded Nintendo Switch");
-			sleep(5);
+			svcSleepThread(5000000000ull); // 5 secs
 			break;
 			} else {
 			send_message(socket_desc, channel, "Nice try! you are logged :)");
